@@ -22,7 +22,7 @@ def poll_status(client, job_id):
     poll query status
     '''
     result = client.get_query_execution(
-        QueryExecutionId = job_id
+        QueryExecutionId=job_id
     )
 
     state = result['QueryExecution']['Status']['State']
@@ -48,8 +48,11 @@ def main():
     query = args.query
 
     try:
-        client = boto3.client('athena', region_name=region_name,
-                aws_access_key_id=access_key, aws_secret_access_key=secret_key)
+        client = boto3.client(
+            'athena',
+            region_name=region_name,
+            aws_access_key_id=access_key,
+            aws_secret_access_key=secret_key)
     except Exception as e:
         print(f'Failed to access Athena with specified credentials')
         raise(e)
@@ -66,10 +69,10 @@ def main():
         output = f's3://{bucket}/'
 
     job = client.start_query_execution(
-                QueryString=query,
-                QueryExecutionContext=context,
-                ResultConfiguration={'OutputLocation': output}
-                )
+        QueryString=query,
+        QueryExecutionContext=context,
+        ResultConfiguration={'OutputLocation': output}
+    )
 
     job_id = job['QueryExecutionId']
 
