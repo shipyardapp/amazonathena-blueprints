@@ -18,7 +18,7 @@ def get_args():
         '--aws-default-region',
         dest='aws_default_region',
         required=True)
-    parser.add_argument('--bucket', dest='bucket', required=True)
+    parser.add_argument('--bucket-name', dest='bucket', required=True)
     parser.add_argument(
         '--log-folder',
         dest='log_folder',
