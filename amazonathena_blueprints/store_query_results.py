@@ -6,9 +6,18 @@ import boto3
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--access-key', dest='access_key', required=True)
-    parser.add_argument('--secret-key', dest='secret_key', required=False)
-    parser.add_argument('--region-name', dest='region_name', required=True)
+    parser.add_argument(
+        '--aws-access-key-id',
+        dest='aws_access_key_id',
+        required=True)
+    parser.add_argument(
+        '--aws-secret-access-key',
+        dest='aws_secret_access_key',
+        required=False)
+    parser.add_argument(
+        '--aws-default-region',
+        dest='aws_default_region',
+        required=True)
     parser.add_argument('--bucket', dest='bucket', required=True)
     parser.add_argument(
         '--log-folder',
@@ -29,6 +38,21 @@ def get_args():
         required=False)
     args = parser.parse_args()
     return args
+
+
+def set_environment_variables(args):
+    """
+    Set AWS credentials as environment variables if they're provided via keyword arguments
+    rather than seeded as environment variables. This will override system defaults.
+    """
+
+    if args.aws_access_key_id:
+        os.environ['AWS_ACCESS_KEY_ID'] = args.aws_access_key_id
+    if args.aws_secret_access_key:
+        os.environ['AWS_SECRET_ACCESS_KEY'] = args.aws_secret_access_key
+    if args.aws_default_region:
+        os.environ['AWS_DEFAULT_REGION'] = args.aws_default_region
+    return
 
 
 def convert_to_boolean(string):
@@ -88,9 +112,9 @@ def poll_status(client, job_id):
 
 def main():
     args = get_args()
-    access_key = args.access_key
-    secret_key = args.secret_key
-    region_name = args.region_name
+    access_key = args.aws_access_key_id
+    secret_key = args.aws_secret_access_key
+    region_name = args.aws_default_region
     database = args.database
     bucket = args.bucket
     log_folder = args.log_folder
@@ -99,6 +123,8 @@ def main():
     destination_folder_name = args.destination_folder_name
     destination_full_path = combine_folder_and_file_name(
         folder_name=destination_folder_name, file_name=destination_file_name)
+
+    set_environment_variables(args)
 
     if not os.path.exists(destination_folder_name) and (
             destination_folder_name != ''):

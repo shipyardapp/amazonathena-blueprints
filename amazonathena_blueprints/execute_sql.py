@@ -1,20 +1,44 @@
 import time
 import argparse
-
+import os
 import boto3
 
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--access-key', dest='access_key', required=True)
-    parser.add_argument('--secret-key', dest='secret_key', required=False)
-    parser.add_argument('--region-name', dest='region_name', required=True)
-    parser.add_argument('--bucket', dest='bucket', required=True)
+    parser.add_argument(
+        '--aws-access-key-id',
+        dest='aws_access_key_id',
+        required=True)
+    parser.add_argument(
+        '--aws-secret-access-key',
+        dest='aws_secret_access_key',
+        required=False)
+    parser.add_argument(
+        '--aws-default-region',
+        dest='aws_default_region',
+        required=True)
+    parser.add_argument('--bucket-name', dest='bucket_name', required=True)
     parser.add_argument('--log-folder', dest='log_folder', required=False)
     parser.add_argument('--database', dest='database', required=False)
     parser.add_argument('--query', dest='query', required=True)
     args = parser.parse_args()
     return args
+
+
+def set_environment_variables(args):
+    """
+    Set AWS credentials as environment variables if they're provided via keyword arguments
+    rather than seeded as environment variables. This will override system defaults.
+    """
+
+    if args.aws_access_key_id:
+        os.environ['AWS_ACCESS_KEY_ID'] = args.aws_access_key_id
+    if args.aws_secret_access_key:
+        os.environ['AWS_SECRET_ACCESS_KEY'] = args.aws_secret_access_key
+    if args.aws_default_region:
+        os.environ['AWS_DEFAULT_REGION'] = args.aws_default_region
+    return
 
 
 def poll_status(client, job_id):
@@ -27,7 +51,6 @@ def poll_status(client, job_id):
 
     state = result['QueryExecution']['Status']['State']
     if state == 'SUCCEEDED':
-        print(f'Query completed')
         return result
     elif state == 'FAILED':
         error_msg = result['QueryExecution']['Status'].get('StateChangeReason')
@@ -39,14 +62,15 @@ def poll_status(client, job_id):
 
 def main():
     args = get_args()
-    access_key = args.access_key
-    secret_key = args.secret_key
-    region_name = args.region_name
+    access_key = args.aws_access_key_id
+    secret_key = args.aws_secret_access_key
+    region_name = args.aws_default_region
     database = args.database
-    bucket = args.bucket
+    bucket = args.bucket_name
     log_folder = args.log_folder
     query = args.query
 
+    set_environment_variables(args)
     try:
         client = boto3.client(
             'athena',
